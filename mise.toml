@@ -1,0 +1,7 @@
+[tools]
+"github:luau-lang/lute" = "latest"
+
+[tasks.start]
+description = "Start the server locally"
+run = "lute src/server.luau"
+env = { DEV = true }
