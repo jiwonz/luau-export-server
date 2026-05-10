@@ -13,7 +13,8 @@ type ExportableAst = SyntaxTypes.AstStatTypeAlias | SyntaxTypes.AstStatTypeFunct
 
 const DEFAULT_MODULE_REFERENCE = "module"
 
-const port = tonumber(Process.env.PORT) or 8080
+const port = tonumber(Process.env.SERVER_PORT) or 8080
+const host = Process.env.SERVER_HOST or "0.0.0.0"
 -- TODO: Utilize official API building Asts
 const baseReExportType = (
 	Parser.parseExpr(`_::__MODULE__.__REF__`) :: SyntaxTypes.AstExprTypeAssertion
@@ -206,6 +207,7 @@ const function processRequest(request: Server.ReceivedRequest): string
 end
 
 Server.serve({
+	hostname = host,
     port = port,
     handler = function(request)
 		if request.method ~= "POST" then
@@ -246,4 +248,4 @@ Server.serve({
     end,
 })
 
-print(`server started at localhost:{port}`)
+print(`server started at {host}:{port}`)
