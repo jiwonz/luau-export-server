@@ -6,9 +6,9 @@ A web application for parsing Luau modules and extracting exported type definiti
 
 **Prerequisites**: [Lute](https://github.com/luau-lang/lute)
 
-**Development**:
+**Run Locally**:
 ```bash
-mise run start
+mise start
 # or: lute src/server.luau
 ```
 
@@ -31,7 +31,11 @@ Server runs on `http://localhost:8080` (configure with `PORT` env var).
 
 ## Development
 
-Check types and lint:
+[Mise](https://mise.jdx.dev/) manages the development toolchain and tasks. It automatically installs and manages Lute based on `mise.toml`.
+
+Available tasks:
+
 ```bash
-mise run check
+mise start   # Start the server locally with auto-reload (DEV mode enabled)
+mise check   # Type check and lint src/ directory
 ```
