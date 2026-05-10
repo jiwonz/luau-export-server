@@ -1,6 +1,6 @@
 -- credits to https://github.com/0x5eal/luau-unzip/blob/main/lib/crc.luau
 
-local CRC32_TABLE = table.create(256)
+local CRC32_TABLE = table.create(256) :: { number } -- patch: add explicit type annotation
 
 -- TODO: Maybe compute this AoT as an optimization
 -- Initialize the lookup table and lock it in place
