@@ -1,5 +1,5 @@
 [tools]
-"github:luau-lang/lute" = "latest"
+"github:luau-lang/lute" = "1.0.0"
 
 [tasks.start]
 description = "Start the server locally"
