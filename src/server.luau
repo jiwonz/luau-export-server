@@ -208,6 +208,18 @@ end
 Server.serve({
     port = port,
     handler = function(request)
+		if request.method ~= "POST" then
+			return {
+				status = 200,
+				headers = {
+					["content-type"] = "application/json",
+				},
+				body = Json.serialize({
+					message = "ok",
+				}),
+			}
+		end
+
 		if request.headers["content-type"] ~= "application/json" then
 			return { status = 415 }
 		end
