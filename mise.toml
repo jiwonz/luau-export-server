@@ -5,3 +5,10 @@
 description = "Start the server locally"
 run = "lute src/server.luau"
 env = { DEV = true }
+
+[tasks.check]
+description = "Run type checking and linting"
+run = [
+	"lute check src",
+	"lute lint src"
+]
