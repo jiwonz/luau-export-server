@@ -1,30 +1,31 @@
 const Server = require("@lute/net/server")
 const Parser = require("@std/syntax/parser")
 const Query = require("@std/syntax/query")
-const Utils = require("@std/syntax/utils")
+const SyntaxUtils = require("@std/syntax/utils")
 const Printer = require("@std/syntax/printer")
-const Types = require("@std/syntax/types")
+const SyntaxTypes = require("@std/syntax/types")
 const Luau = require("@lute/luau")
 const Process = require("@lute/process")
 const Gzip = require("./gzip")
 const Json = require("@std/json")
 
-type ExportableAst = Types.AstStatTypeAlias | Types.AstStatTypeFunction
+type ExportableAst = SyntaxTypes.AstStatTypeAlias | SyntaxTypes.AstStatTypeFunction
 
 const DEFAULT_MODULE_REFERENCE = "module"
 
 const port = tonumber(Process.env.PORT) or 8080
+-- TODO: Utilize official API building Asts
 const baseReExportType = (
-	Parser.parseExpr(`_::__MODULE__.__REF__`) :: Types.AstExprTypeAssertion
-).annotation :: Types.AstTypeReference
+	Parser.parseExpr(`_::__MODULE__.__REF__`) :: SyntaxTypes.AstExprTypeAssertion
+).annotation :: SyntaxTypes.AstTypeReference
 const baseTypeRef = (
-	Parser.parseExpr("_::__REF__") :: Types.AstExprTypeAssertion
-).annotation :: Types.AstTypeReference
-const baseTypeExport = Parser.parseBlock("export type _=_").statements[1] :: Types.AstStatTypeAlias
+	Parser.parseExpr("_::__REF__") :: SyntaxTypes.AstExprTypeAssertion
+).annotation :: SyntaxTypes.AstTypeReference
+const baseTypeExport = Parser.parseBlock("export type _=_").statements[1] :: SyntaxTypes.AstStatTypeAlias
 const dummySpan = Luau.span.create({ beginLine = 0, beginColumn = 0, endLine = 0, endColumn = 0 })
 const isDevMode = Process.env.DEV ~= nil
 
-const function createToken<T>(str: T | ""): Types.Token<T>
+const function createToken<T>(str: T | ""): SyntaxTypes.Token<T>
     return {
         leadingTrivia = {},
         location = dummySpan,
@@ -39,7 +40,7 @@ end
 	tbl[key] = newValue
 end
 
-const function toReExported(exportable: ExportableAst, moduleReference: string): Types.AstStatTypeAlias
+const function toReExported(exportable: ExportableAst, moduleReference: string): SyntaxTypes.AstStatTypeAlias
     const newType = table.clone(baseReExportType)
 
     const newTypeName = table.clone(newType.name)
@@ -63,7 +64,7 @@ const function toReExported(exportable: ExportableAst, moduleReference: string):
 		forceMutate(typeExport, "genericPacks", exportable.genericPacks)
 		forceMutate(typeExport, "closeGenerics", exportable.closeGenerics)
 
-        const parameters: Types.Punctuated<Types.AstType | Types.AstTypePack> = {}
+        const parameters: SyntaxTypes.Punctuated<SyntaxTypes.AstType | SyntaxTypes.AstTypePack> = {}
         const generics = exportable.generics
         const genericPacks = exportable.genericPacks
 
@@ -84,7 +85,7 @@ const function toReExported(exportable: ExportableAst, moduleReference: string):
 			forceMutate(typeExport, "genericPacks", genericPacks)
             for _, generic in genericPacks do
                 const genericNode = generic.node
-                const paramNode: Types.AstTypePackGeneric = {
+                const paramNode: SyntaxTypes.AstTypePackGeneric = {
                     location = dummySpan,
                     kind = "typepack",
                     tag = "generic",
@@ -103,8 +104,8 @@ const function toReExported(exportable: ExportableAst, moduleReference: string):
         const typeFuncParameters = exportable.body.parameters
         const typeFuncParamCount = #typeFuncParameters
         if typeFuncParamCount > 0 then
-            const generics = table.create(typeFuncParamCount) :: Types.Punctuated<Types.AstGenericType>
-            const parameters = table.create(typeFuncParamCount) :: Types.Punctuated<Types.AstType | Types.AstTypePack>
+            const generics = table.create(typeFuncParamCount) :: SyntaxTypes.Punctuated<SyntaxTypes.AstGenericType>
+            const parameters = table.create(typeFuncParamCount) :: SyntaxTypes.Punctuated<SyntaxTypes.AstType | SyntaxTypes.AstTypePack>
             for i, typeFuncParam in typeFuncParameters do
                 const typeFuncParamNode = typeFuncParam.node
                 const paramNode = table.clone(baseTypeRef)
@@ -114,7 +115,7 @@ const function toReExported(exportable: ExportableAst, moduleReference: string):
                     separator = typeFuncParam.separator,
                 }
 
-                const genericNode: Types.AstGenericType = {
+                const genericNode: SyntaxTypes.AstGenericType = {
                     tag = "generic",
                     name = paramNode.name,
                     equals = nil,
@@ -129,7 +130,7 @@ const function toReExported(exportable: ExportableAst, moduleReference: string):
 			forceMutate(newType, "parameters", parameters)
 			forceMutate(newType, "openParameters", createToken("<"))
             const closeParamToken = createToken(">")
-			const whitespace: Types.Trivia = {
+			const whitespace: SyntaxTypes.Trivia = {
 				tag = "whitespace",
 				location = dummySpan,
 				text = " ",
@@ -151,7 +152,7 @@ const function reExport(source: string, moduleReference: string?): string
 
     const result = Parser.parse(source)
     const q = Query.findAllFromRoot(result, function(node): ExportableAst?
-        return if Utils.isStatTypeAlias(node) or Utils.isStatTypeFunction(node) then
+        return if SyntaxUtils.isStatTypeAlias(node) or SyntaxUtils.isStatTypeFunction(node) then
             node :: ExportableAst? else nil
     end):filter(function(node)
         return node.export ~= nil
@@ -178,7 +179,7 @@ if isDevMode then
         export type D<T=number> = T
     ]]
     const result = reExport(code)
-    print(`dev mode test:\n{result}\n`)
+    print(`dev mode test result:\n{result}\n`)
     Parser.parse(result)
 end
 
@@ -206,7 +207,7 @@ end
 
 Server.serve({
     port = port,
-    handler = function(request, server)
+    handler = function(request)
 		if request.headers["content-type"] ~= "application/json" then
 			return { status = 415 }
 		end
