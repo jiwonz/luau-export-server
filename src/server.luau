@@ -239,14 +239,22 @@ Server.serve({
 			}
 		end
 
-		const loweredHeaders: { [string]: string } = {}
-		for key, value in request.headers do
-			loweredHeaders[string.lower(key)] = value
-		end
+		-- const loweredHeaders: { [string]: string } = {}
+		-- for key, value in request.headers do
+		-- 	loweredHeaders[string.lower(key)] = value
+		-- end
 
 		if not Process.env.NO_HEADERS then -- for render.com temporary idfk
-			if not loweredHeaders["content-type"] or not string.find(string.lower(loweredHeaders["content-type"]), "application/json") then
-				table.insert(logs, `error: content-type is not json(body: {request.body}, headers: { Json.serialize(request.headers :: Json.Object) })`)
+			-- if not loweredHeaders["content-type"] or not string.find(string.lower(loweredHeaders["content-type"]), "application/json") then
+			-- 	table.insert(logs, `error: content-type is not json(body: {request.body}, headers: { Json.serialize(request.headers :: Json.Object) })`)
+			-- 	return {
+			-- 		status = 415,
+			-- 	}
+			-- end
+
+			if string.find(string.lower(request.headers["content-type"]), "application/json") then
+				table.insert(logs, `error: content-type is not json`)
+
 				return {
 					status = 415,
 				}
