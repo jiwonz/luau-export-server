@@ -216,6 +216,14 @@ Server.serve({
 					},
 					body = table.concat(logs, "\n"),
 				}
+			elseif request.path == "/test_headers" then
+				return {
+					status = 200,
+					headers = {
+						["content-type"] = "application/json",
+					},
+					body = Json.serialize(request.headers :: Json.Object),
+				}
 			elseif request.path == "/" then
 				return {
 					status = 200,
