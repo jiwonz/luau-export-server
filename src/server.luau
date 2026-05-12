@@ -11,8 +11,6 @@ const Json = require("@std/json")
 
 type ExportableAst = SyntaxTypes.AstStatTypeAlias | SyntaxTypes.AstStatTypeFunction
 
-const DEFAULT_MODULE_REFERENCE = "module"
-
 const port = tonumber(Process.env.SERVER_PORT) or 8080
 const host = Process.env.SERVER_HOST or "0.0.0.0"
 -- TODO: Utilize official API building Asts
@@ -148,9 +146,7 @@ const function toReExported(exportable: ExportableAst, moduleReference: string):
     return typeExport
 end
 
-const function reExport(source: string, moduleReference: string?): string
-	moduleReference = moduleReference or DEFAULT_MODULE_REFERENCE
-
+const function reExport(source: string, moduleReference: string): string
     const result = Parser.parse(source)
     const q = Query.findAllFromRoot(result, function(node): ExportableAst?
         return if SyntaxUtils.isStatTypeAlias(node) or SyntaxUtils.isStatTypeFunction(node) then
@@ -158,7 +154,7 @@ const function reExport(source: string, moduleReference: string?): string
     end):filter(function(node)
         return node.export ~= nil
     end):map(function(node)
-		return toReExported(node, moduleReference :: string) -- Luau WHAT??
+		return toReExported(node, moduleReference)
     end) :: Query.Query
     const contents = table.create(#q.nodes) :: { string }
 
@@ -179,7 +175,7 @@ if isDevMode then
         export type K<A...> = <G>() -> G
         export type D<T=number> = T
     ]]
-    const result = reExport(code)
+    const result = reExport(code, "module")
     print(`dev mode test result:\n{result}\n`)
     Parser.parse(result)
 end
@@ -194,7 +190,7 @@ const function processRequest(request: Server.ReceivedRequest): string
 	end
 
 	const moduleReference = (input :: Json.Object).moduleReference
-	if moduleReference ~= nil and typeof(moduleReference) ~= "string" then
+	if typeof(moduleReference) ~= "string" then
 		error("'moduleReference' field must be a string or null.")
 	end
 
@@ -210,7 +206,7 @@ Server.serve({
 	hostname = host,
     port = port,
     handler = function(request)
-		if request.method ~= "POST" then
+		if request.method == "GET" then
 			return {
 				status = 200,
 				headers = {
@@ -219,6 +215,12 @@ Server.serve({
 				body = Json.serialize({
 					message = "ok",
 				}),
+			}
+		end
+
+		if request.method ~= "POST" then
+			return {
+				status = 405,
 			}
 		end
 
