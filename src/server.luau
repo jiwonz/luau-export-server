@@ -226,10 +226,10 @@ Server.serve({
 
 		const loweredHeaders: { [string]: string } = {}
 		for key, value in request.headers do
-			loweredHeaders[key] = string.lower(value)
+			loweredHeaders[string.lower(key)] = value
 		end
 
-		if not string.find(string.lower(loweredHeaders["content-type"]), "application/json") then
+		if not loweredHeaders["content-type"] or not string.find(string.lower(loweredHeaders["content-type"]), "application/json") then
 			return { status = 415 }
 		end
 
