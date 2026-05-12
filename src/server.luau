@@ -230,7 +230,15 @@ Server.serve({
 		end
 
 		if not loweredHeaders["content-type"] or not string.find(string.lower(loweredHeaders["content-type"]), "application/json") then
-			return { status = 415 }
+			return {
+				status = 415,
+				headers = {
+					["content-type"] = "application/json",
+				},
+				body = Json.serialize({
+					gotHeaders = loweredHeaders,
+				}),
+			}
 		end
 
 		-- TODO: result over exception(using pcall) (for a better error handling.. maybe?)
