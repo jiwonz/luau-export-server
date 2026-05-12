@@ -216,14 +216,6 @@ Server.serve({
 					},
 					body = table.concat(logs, "\n"),
 				}
-			elseif request.path == "/test_headers" then
-				return {
-					status = 200,
-					headers = {
-						["content-type"] = "application/json",
-					},
-					body = Json.serialize(request.headers :: Json.Object),
-				}
 			elseif request.path == "/" then
 				return {
 					status = 200,
@@ -253,7 +245,7 @@ Server.serve({
 		end
 
 		if not loweredHeaders["content-type"] or not string.find(string.lower(loweredHeaders["content-type"]), "application/json") then
-			table.insert(logs, `error: content-type is not json(headers: { Json.serialize(loweredHeaders :: Json.Object) })`)
+			table.insert(logs, `error: content-type is not json(headers: { Json.serialize(request.headers :: Json.Object) })`)
 			return {
 				status = 415,
 			}
