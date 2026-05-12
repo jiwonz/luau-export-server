@@ -23,6 +23,7 @@ const baseTypeRef = (
 const baseTypeExport = Parser.parseBlock("export type _=_").statements[1] :: SyntaxTypes.AstStatTypeAlias
 const dummySpan = Luau.span.create({ beginLine = 0, beginColumn = 0, endLine = 0, endColumn = 0 })
 const isDevMode = Process.env.DEV ~= nil
+const logs: { string } = {}
 
 const function createToken<T>(str: T | ""): SyntaxTypes.Token<T>
     return {
@@ -207,14 +208,28 @@ Server.serve({
     port = port,
     handler = function(request)
 		if request.method == "GET" then
+			if request.path == "/logs" then
+				return {
+					status = 200,
+					headers = {
+						["content-type"] = "text/plain",
+					},
+					body = table.concat(logs, "\n"),
+				}
+			elseif request.path == "/" then
+				return {
+					status = 200,
+					headers = {
+						["content-type"] = "application/json",
+					},
+					body = Json.serialize({
+						message = "ok",
+					}),
+				}
+			end
+
 			return {
-				status = 200,
-				headers = {
-					["content-type"] = "application/json",
-				},
-				body = Json.serialize({
-					message = "ok",
-				}),
+				status = 404,
 			}
 		end
 
@@ -230,14 +245,9 @@ Server.serve({
 		end
 
 		if not loweredHeaders["content-type"] or not string.find(string.lower(loweredHeaders["content-type"]), "application/json") then
+			table.insert(logs, `error: content-type is not json(headers: { Json.serialize(loweredHeaders :: Json.Object) })`)
 			return {
 				status = 415,
-				headers = {
-					["content-type"] = "application/json",
-				},
-				body = Json.serialize({
-					gotHeaders = loweredHeaders,
-				}),
 			}
 		end
 
