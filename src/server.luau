@@ -244,11 +244,13 @@ Server.serve({
 			loweredHeaders[string.lower(key)] = value
 		end
 
-		if not loweredHeaders["content-type"] or not string.find(string.lower(loweredHeaders["content-type"]), "application/json") then
-			table.insert(logs, `error: content-type is not json(headers: { Json.serialize(request.headers :: Json.Object) })`)
-			return {
-				status = 415,
-			}
+		if not Process.env.NO_HEADERS then -- for render.com temporary idfk
+			if not loweredHeaders["content-type"] or not string.find(string.lower(loweredHeaders["content-type"]), "application/json") then
+				table.insert(logs, `error: content-type is not json(body: {request.body}, headers: { Json.serialize(request.headers :: Json.Object) })`)
+				return {
+					status = 415,
+				}
+			end
 		end
 
 		-- TODO: result over exception(using pcall) (for a better error handling.. maybe?)
@@ -257,6 +259,8 @@ Server.serve({
 			if isDevMode then
 				print(`got a bad request:\n{result}\n`)
 			end
+
+			table.insert(logs, `error: error during processing({result})`)
 
 			return {
 				status = 400,
