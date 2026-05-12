@@ -224,7 +224,12 @@ Server.serve({
 			}
 		end
 
-		if request.headers["content-type"] ~= "application/json" then
+		const loweredHeaders: { [string]: string } = {}
+		for key, value in request.headers do
+			loweredHeaders[key] = string.lower(value)
+		end
+
+		if not string.find(string.lower(loweredHeaders["content-type"]), "application/json") then
 			return { status = 415 }
 		end
 
